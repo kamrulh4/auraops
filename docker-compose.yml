@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: auraops-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # Control host docker
+      - orbit-data:/app/data # Persistent SQLite DB
+      - nginx-conf:/etc/nginx/conf.d # Write proxy configs here
+    user: root
+    environment:
+      - DATABASE_URL=sqlite:////app/data/auraops.db
+      - SECRET_KEY=${SECRET_KEY:-changeme}
+    networks:
+      - auraops-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: auraops-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    networks:
+      - auraops-network
+
+  proxy:
+    image: nginx:alpine
+    container_name: auraops-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - nginx-conf:/etc/nginx/conf.d:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - auraops-network
+
+volumes:
+  orbit-data:
+  nginx-conf:
+
+networks:
+  auraops-network:
+    external: true
+    name: auraops-network

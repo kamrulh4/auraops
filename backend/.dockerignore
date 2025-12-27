@@ -1,0 +1,16 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+venv
+.venv
+env
+*.pyc
+*.pyo
+*.pyd
+
+# Local config
+.env
+Dockerfile
