@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.session import get_db
@@ -22,15 +23,23 @@ class ProjectCreate(BaseModel):
     repo_url: str # Docker Image for now
     domain: Optional[str] = None
     port: int = 80
+    env_vars: Optional[dict] = {}
+    provider: str = "image" # image, github
 
 @router.post("/", response_model=dict)
 def create_project(project_in: ProjectCreate, db: Session = Depends(get_db), authenticated: bool = Depends(get_current_user)):
+    import secrets
+    token = secrets.token_urlsafe(16)
+    
     db_project = Project(
         name=project_in.name,
         repo_url=project_in.repo_url,
         domain=project_in.domain,
         port=project_in.port,
-        status="stopped"
+        status="stopped",
+        provider=project_in.provider,
+        env_vars=project_in.env_vars,
+        webhook_token=token
     )
     db.add(db_project)
     db.commit()

@@ -19,15 +19,23 @@ def trigger_deploy(token: str, background_tasks: BackgroundTasks, db: Session = 
     return {"status": "deployment_queued", "project": project.name}
 
 def handle_deployment(project_id: int, db: Session):
-    # Re-fetch to ensure session validity if needed, or just pass ID
-    # Here we create a new session or use logic carefully. 
-    # For simplicity, let's assume valid scope or re-query.
+    # Re-fetch project
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        return
+
+    # Update status
+    project.status = "building"
+    db.commit()
+
+    # Deploy
+    result = DockerService.deploy_project(project)
+
+    # Update Final Status
+    if result["status"] == "success":
+        project.status = "running"
+        project.last_deployed_at = datetime.utcnow()
+    else:
+        project.status = "failed"
     
-    # Note: In real app, avoid passing DB session to bg task if it closes.
-    # We should use a fresh session in the background task.
-    
-    # Logic:
-    # 1. Update status to 'building'
-    # 2. Call DockerService
-    # 3. Update status to 'running'/'failed'
-    pass # Simplification for MVP structure. Real implementation is in DockerService.deploy_project
+    db.commit()
