@@ -9,3 +9,5 @@ httpx
 pydantic-settings
 bcrypt==4.0.1
 GitPython
+PyYAML
+psutil

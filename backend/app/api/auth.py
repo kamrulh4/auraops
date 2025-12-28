@@ -11,7 +11,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 class UserCreate(BaseModel):
     email: str
+    username: str
     password: str
+    role: str = "developer"  # admin, developer, viewer
 
 class Token(BaseModel):
     access_token: str
@@ -19,16 +21,24 @@ class Token(BaseModel):
 
 @router.post("/register", response_model=Token)
 def register(user_in: UserCreate, db: Session = Depends(get_db)):
+    # Check if email exists
     user = db.query(User).filter(User.email == user_in.email).first()
     if user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    # Check if first user (make superuser)
+    # Check if username exists
+    user = db.query(User).filter(User.username == user_in.username).first()
+    if user:
+        raise HTTPException(status_code=400, detail="Username already taken")
+    
+    # Check if first user (make admin)
     is_first_user = db.query(User).count() == 0
     
     user = User(
         email=user_in.email,
+        username=user_in.username,
         hashed_password=get_password_hash(user_in.password),
+        role="admin" if is_first_user else user_in.role,
         is_superuser=is_first_user
     )
     db.add(user)

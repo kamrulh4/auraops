@@ -13,6 +13,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock # Control host docker
       - orbit-data:/app/data # Persistent SQLite DB
       - nginx-conf:/etc/nginx/conf.d # Write proxy configs here
+      - letsencrypt:/etc/letsencrypt # SSL certificates
+      - www-certbot:/var/www/certbot # Certbot webroot
+      - static-files:/var/www # Static site builds
     user: root
     environment:
       - DATABASE_URL=sqlite:////app/data/auraops.db
@@ -40,6 +43,9 @@ services:
       - "443:443"
     volumes:
       - nginx-conf:/etc/nginx/conf.d:ro
+      - letsencrypt:/etc/letsencrypt:ro
+      - www-certbot:/var/www/certbot:ro
+      - static-files:/var/www:ro
     depends_on:
       - backend
       - frontend
@@ -49,6 +55,9 @@ services:
 volumes:
   orbit-data:
   nginx-conf:
+  letsencrypt:  # SSL certificates
+  www-certbot:  # Certbot webroot for HTTP-01 challenge
+  static-files: # Static site builds
 
 networks:
   auraops-network:
