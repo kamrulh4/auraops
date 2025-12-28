@@ -304,8 +304,8 @@ class ServiceDeployer:
                 volumes=volumes,
                 ports=ports,
                 restart_policy={"Name": "unless-stopped"},
-                network="auraops-network",
-                healthcheck=template.get("healthcheck")
+                network="auraops-network"
+                # Note: healthcheck not supported in python-docker run() - use compose for healthchecks
             )
             
             logger.info(f"Service deployed successfully: {container.short_id}")
