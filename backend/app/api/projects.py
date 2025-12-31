@@ -66,6 +66,26 @@ class ProjectUpdate(BaseModel):
     env_vars: Optional[dict] = None
     port: Optional[int] = None
 
+class ProjectResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    deployment_type: str
+    provider: str
+    repo_url: Optional[str] = None
+    branch: Optional[str] = None
+    status: str
+    last_deployed_at: Optional[datetime] = None
+    port: int
+    env_vars: dict
+    webhook_token: Optional[str] = None
+    internal_url: Optional[str] = None
+    created_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+        populate_by_name = True
+
 @router.post("/", response_model=dict)
 def create_project(
     project_in: ProjectCreate,
@@ -107,7 +127,7 @@ def create_project(
         "internal_url": db_project.internal_url
     }
 
-@router.get("/", response_model=list)
+@router.get("/", response_model=list[ProjectResponse])
 def list_projects(
     db: Session = Depends(get_db),
     user: User = Depends(require_permission("projects:read"))
@@ -119,7 +139,7 @@ def list_projects(
         projects = db.query(Project).filter(Project.owner_id == user.id).all()
     return projects
 
-@router.get("/{project_id}", response_model=dict)
+@router.get("/{project_id}", response_model=ProjectResponse)
 def get_project(
     project_id: int,
     db: Session = Depends(get_db),
@@ -135,7 +155,7 @@ def get_project(
     
     return project
 
-@router.put("/{project_id}", response_model=dict)
+@router.put("/{project_id}", response_model=ProjectResponse)
 def update_project(
     project_id: int,
     project_in: ProjectUpdate,

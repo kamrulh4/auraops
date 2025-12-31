@@ -61,5 +61,6 @@ volumes:
 
 networks:
   auraops-network:
-    external: true
+    driver: bridge
     name: auraops-network
+

@@ -35,7 +35,7 @@ export default function Dashboard() {
         if (!token) return router.push("/login");
 
         try {
-            const res = await fetch("http://localhost:8000/api/v1/projects/", {
+            const res = await fetch("/api/v1/projects/", {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (res.ok) {
@@ -45,7 +45,8 @@ export default function Dashboard() {
                 router.push("/login");
             }
         } catch (error) {
-            console.error(error);
+            console.error("Fetch projects failed:", error);
+            // Optionally set an error state here
         } finally {
             setLoading(false);
         }
@@ -89,7 +90,7 @@ export default function Dashboard() {
             return acc;
         }, {} as Record<string, string>);
 
-        await fetch("http://localhost:8000/api/v1/projects/", {
+        const res = await fetch("/api/v1/projects/", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -105,6 +106,13 @@ export default function Dashboard() {
             }),
         });
 
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({ detail: "Unknown error" }));
+            console.error("Project creation failed:", errorData);
+            alert(`Failed to create project: ${errorData.detail || "Unknown error"}`);
+            return;
+        }
+
         setIsModalOpen(false);
         // Reset form
         setName("");
@@ -116,7 +124,7 @@ export default function Dashboard() {
 
     const handleDeploy = async (id: number) => {
         const token = getToken();
-        await fetch(`http://localhost:8000/api/v1/projects/${id}/deploy`, {
+        await fetch(`/api/v1/projects/${id}/deploy`, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
         });

@@ -21,7 +21,19 @@ class DomainUpdate(BaseModel):
     ssl_enabled: Optional[bool] = None
     is_active: Optional[bool] = None
 
-@router.post("/", response_model=dict)
+class DomainResponse(BaseModel):
+    id: int
+    domain: str
+    project_id: int
+    ssl_enabled: bool
+    ssl_valid: bool
+    is_active: bool
+    dns_verified: bool
+    
+    class Config:
+        from_attributes = True
+
+@router.post("/", response_model=DomainResponse)
 def create_domain(
     domain_in: DomainCreate,
     db: Session = Depends(get_db),
@@ -72,7 +84,7 @@ def create_domain(
         "ssl_valid": domain.ssl_valid
     }
 
-@router.get("/{domain_id}", response_model=dict)
+@router.get("/{domain_id}", response_model=DomainResponse)
 def get_domain(
     domain_id: int,
     db: Session = Depends(get_db),
@@ -91,7 +103,7 @@ def get_domain(
     
     return domain
 
-@router.get("/project/{project_id}", response_model=list)
+@router.get("/project/{project_id}", response_model=list[DomainResponse])
 def list_project_domains(
     project_id: int,
     db: Session = Depends(get_db),

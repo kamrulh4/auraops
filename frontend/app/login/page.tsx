@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 export default function LoginPage() {
     const [isRegistering, setIsRegistering] = useState(false);
     const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const router = useRouter();
@@ -16,8 +17,8 @@ export default function LoginPage() {
 
         try {
             const url = isRegistering
-                ? "http://localhost:8000/api/v1/auth/register"
-                : "http://localhost:8000/api/v1/auth/token";
+                ? "/api/v1/auth/register"
+                : "/api/v1/auth/token";
 
             const options: RequestInit = {
                 method: "POST",
@@ -27,7 +28,7 @@ export default function LoginPage() {
             };
 
             if (isRegistering) {
-                options.body = JSON.stringify({ email, password });
+                options.body = JSON.stringify({ email, username, password });
             } else {
                 options.body = new URLSearchParams({
                     username: email,
@@ -47,7 +48,11 @@ export default function LoginPage() {
             document.cookie = `token=${data.access_token}; path=/`;
             router.push("/dashboard");
         } catch (err: any) {
-            setError(err.message);
+            let msg = err.message || "An error occurred";
+            if (typeof err.message === 'object') {
+                msg = JSON.stringify(err.message);
+            }
+            setError(msg);
         }
     };
 
@@ -85,6 +90,22 @@ export default function LoginPage() {
                                     onChange={(e) => setEmail(e.target.value)}
                                 />
                             </div>
+
+                            {isRegistering && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Username
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        className="block w-full rounded-lg border-0 bg-gray-50 dark:bg-zinc-800 py-2.5 px-4 text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-zinc-700 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 transition-all"
+                                        placeholder="admin"
+                                        value={username}
+                                        onChange={(e) => setUsername(e.target.value)}
+                                    />
+                                </div>
+                            )}
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

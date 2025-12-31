@@ -201,14 +201,65 @@ server {{
             return False
     
     @staticmethod
+    def write_base_config():
+        """Write base routing configuration for AuraOps"""
+        
+        config = """
+server {
+    listen 80;
+    server_name localhost;
+
+    # Backend API
+    location /api/ {
+        proxy_pass http://auraops-backend:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Frontend
+    location / {
+        proxy_pass http://auraops-frontend:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # SPA support
+        proxy_intercept_errors on;
+        error_page 404 = /index.html;
+    }
+}
+"""
+        config_path = f"{NginxService.NGINX_CONF_DIR}/auraops-base.conf"
+        
+        try:
+            import os
+            os.makedirs(NginxService.NGINX_CONF_DIR, exist_ok=True)
+            with open(config_path, 'w') as f:
+                f.write(config)
+            
+            logger.info(f"Generated base Nginx config at {config_path}")
+            NginxService.reload()
+            return True
+        except Exception as e:
+            logger.error(f"Failed to write base Nginx config: {e}")
+            return False
+
+    @staticmethod
     def reload():
         """Reload Nginx configuration without downtime"""
         
         try:
-            # First test the configuration
             client = docker.from_env()
-            proxy_container = client.containers.get("auraops-proxy")
+            try:
+                proxy_container = client.containers.get("auraops-proxy")
+            except docker.errors.NotFound:
+                logger.warning("auraops-proxy container not found, skip reload")
+                return False
             
+            # First test the configuration
             test_result = proxy_container.exec_run("nginx -t")
             
             if test_result.exit_code != 0:

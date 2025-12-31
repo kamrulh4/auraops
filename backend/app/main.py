@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import auth, projects, webhooks, domains, services, users, admin
 from app.db.session import engine, Base
+from app.services.nginx_service import NginxService
 
 # Create Tables
 Base.metadata.create_all(bind=engine)
@@ -11,6 +12,12 @@ app = FastAPI(
     description="Lightweight PaaS for VPS Deployments",
     version="2.0.0"
 )
+
+@app.on_event("startup")
+def startup_event():
+    """Run startup tasks"""
+    # Generate base Nginx config
+    NginxService.write_base_config()
 
 # CORS
 app.add_middleware(

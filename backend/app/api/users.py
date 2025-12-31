@@ -36,6 +36,17 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
+from app.api.projects import ProjectResponse
+
+class UserProjectsResponse(BaseModel):
+    user_id: int
+    username: str
+    project_count: int
+    projects: list[ProjectResponse]
+    
+    class Config:
+        from_attributes = True
+
 def require_admin(user: User = Depends(get_current_user)) -> User:
     """Require admin role"""
     if user.role != "admin" and not user.is_superuser:
@@ -194,7 +205,7 @@ def delete_user(
     
     return {"status": "deleted", "user_id": user_id}
 
-@router.get("/{user_id}/projects")
+@router.get("/{user_id}/projects", response_model=UserProjectsResponse)
 def get_user_projects(
     user_id: int,
     db: Session = Depends(get_db),
